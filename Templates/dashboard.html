@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - Timetable System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Welcome, {{ username }}</h2>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('add_entry') }}">Add Timetable</a></li>
+                <li><a href="{{ url_for('dashboard') }}">View Timetable</a></li>
+                <li><a href="{{ url_for('check_slots') }}">Check Slots</a></li>
+                <li><a href="{{ url_for('logout') }}">Logout</a></li>
+            </ul>
+        </nav>
+
+                {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                        <ul class="flashes">
+                        {% for message in messages %}
+                            <li>{{ message }}</li>
+                        {% endfor %}
+                        </ul>
+                    {% endif %}
+                {% endwith %}
+
+                <h2>Timetable Entries</h2>
+                <table border="1" cellpadding="8" cellspacing="0">
+                        <tr>
+                                <th>ID</th>
+                                <th>Staff Name</th>
+                                <th>Department</th>
+                                <th>Semester</th>
+                                <th>Subject</th>
+                                <th>Day</th>
+                                <th>Time</th>
+                        </tr>
+                        {% for row in entries %}
+                        <tr>
+                                <td>{{ row.id }}</td>
+                                <td>{{ row.staff_name }}</td>
+                                <td>{{ row.department }}</td>
+                                <td>{{ row.semester }}</td>
+                                <td>{{ row.subject }}</td>
+                                <td>{{ row.day }}</td>
+                                <td>{{ row.time }}</td>
+                        </tr>
+                        {% endfor %}
+                </table>
+        </div>
+</body>
+</html>

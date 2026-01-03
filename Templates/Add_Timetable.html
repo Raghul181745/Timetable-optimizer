@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Add Timetable Entry</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h2>Add Timetable Entry</h2>
+        <form method="POST">
+            <label>Staff Name:</label>
+            <input type="text" name="staff_name" required><br><br>
+
+            <label>Department:</label>
+            <input type="text" name="department" required><br><br>
+
+            <label>Semester:</label>
+            <input type="text" name="semester" required><br><br>
+
+            <label>Subject:</label>
+            <input type="text" name="subject" required><br><br>
+
+            <label>Day:</label>
+            <select name="day" required>
+                <option value="Monday">Monday</option>
+                <option value="Tuesday">Tuesday</option>
+                <option value="Wednesday">Wednesday</option>
+                <option value="Thursday">Thursday</option>
+                <option value="Friday">Friday</option>
+            </select><br><br>
+
+            <label>Hour:</label>
+            <select name="time" required>
+                <option value="8:30 - 9:20">8:30 - 9:20</option>
+                <option value="9:20 - 10:10">9:20 - 10:10</option>
+                <option value="10:20 - 11:10">10:20 - 11:10</option>
+                <option value="11:10 - 12:00">11:10 - 12:00</option>
+                <option value="12:45 - 1:30">12:45 - 1:30</option>
+                <option value="1:30 - 2:20">1:30 - 2:20</option>
+                <option value="2:20 - 3:00">2:20 - 3:00</option>
+            </select><br><br>
+
+            <button type="submit">Add Entry</button>
+        </form>
+        <br>
+        <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+    </div>
+</body>
+</html>
