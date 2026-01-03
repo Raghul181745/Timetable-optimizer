@@ -56,12 +56,18 @@
         <input type="text" name="staff_name" value="{{ staff_name or '' }}" required>
         <label>Department:</label>
         <input type="text" name="department" value="{{ department or '' }}" required>
+        <label>Year:</label>
+        <input type="text" name="year" value="{{ request.form.get('year', '') }}">
+        <label>Semester:</label>
+        <input type="text" name="semester" value="{{ request.form.get('semester', '') }}">
         <button type="submit">Check</button>
     </form>
 
     <form method="POST" style="margin-bottom: 20px;">
         <input type="hidden" name="staff_name" value="{{ staff_name or '' }}">
         <input type="hidden" name="department" value="{{ department or '' }}">
+        <input type="hidden" name="year" value="{{ request.form.get('year', '') }}">
+        <input type="hidden" name="semester" value="{{ request.form.get('semester', '') }}">
         <label>Auto Assign Subject:</label>
         <input type="text" name="subject" placeholder="Subject">
         <button type="submit" name="auto_assign" value="1">Auto Assign</button>
