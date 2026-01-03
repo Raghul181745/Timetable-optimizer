@@ -191,7 +191,7 @@ def dashboard():
                 if row["day"] in schedule and row["time"] in schedule[row["day"]]:
                     schedule[row["day"]][row["time"]] = row
 
-    return render_template("dashboard.html", entries=entries, departments=departments, years=years, staff_list=staff_list, time_slots=time_slots, days=days, grid_view=grid_view, schedule=schedule, filter_desc=filter_desc)
+    return render_template("dashboard.html", entries=entries, departments=departments, years=years, staff_list=staff_list, time_slots=time_slots, days=days, grid_view=grid_view, schedule=schedule, filter_desc=filter_desc, username=session.get("username", "Guest"))
 
 # Export Excel Route
 @app.route("/export_excel")
@@ -306,8 +306,18 @@ def delete_slot(entry_id):
     return redirect(url_for("check_slots"))
 
 # Login/logout routes
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
+    if request.method == "POST":
+        username = request.form["username"]
+        password = request.form["password"]
+        # Simple password check (You can change "admin" to whatever you want)
+        if password == "admin":
+            session["username"] = username
+            flash("Logged in successfully!")
+            return redirect(url_for("dashboard"))
+        else:
+            flash("Invalid password!")
     return render_template("login.html")
 
 @app.route("/logout")
