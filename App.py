@@ -136,8 +136,32 @@ def home():
 @app.route("/dashboard")
 def dashboard():
     db = get_db()
-    entries = db.execute("SELECT * FROM timetable").fetchall()
-    return render_template("dashboard.html", entries=entries)
+
+    # Filter parameters
+    staff_name = request.args.get("staff_name")
+    department = request.args.get("department")
+    year = request.args.get("year")
+
+    query = "SELECT * FROM timetable WHERE 1=1"
+    params = []
+
+    if staff_name:
+        query += " AND staff_name = ?"
+        params.append(staff_name)
+    if department:
+        query += " AND department = ?"
+        params.append(department)
+    if year:
+        query += " AND year = ?"
+        params.append(year)
+
+    entries = db.execute(query, params).fetchall()
+
+    # Get distinct values for filter buttons
+    departments = db.execute("SELECT DISTINCT department FROM timetable WHERE department != '' ORDER BY department").fetchall()
+    years = db.execute("SELECT DISTINCT year FROM timetable WHERE year != '' ORDER BY year").fetchall()
+
+    return render_template("dashboard.html", entries=entries, departments=departments, years=years)
 
 # Check slots route
 @app.route("/check_slots", methods=["GET", "POST"])

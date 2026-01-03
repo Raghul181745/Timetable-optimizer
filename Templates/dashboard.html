@@ -27,6 +27,24 @@
                     {% endif %}
                 {% endwith %}
 
+                <!-- Filter Section -->
+                <div style="margin: 20px 0; padding: 15px; background: #f4f4f4; border-radius: 5px;">
+                    <h3>Quick Filters</h3>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Departments:</strong>
+                        {% for dept in departments %}
+                            <a href="{{ url_for('dashboard', department=dept.department) }}" style="margin-right: 5px; text-decoration: none; background: #ddd; padding: 2px 8px; border-radius: 4px; color: #333;">{{ dept.department }}</a>
+                        {% endfor %}
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <strong>Years:</strong>
+                        {% for y in years %}
+                            <a href="{{ url_for('dashboard', year=y.year) }}" style="margin-right: 5px; text-decoration: none; background: #ddd; padding: 2px 8px; border-radius: 4px; color: #333;">{{ y.year }}</a>
+                        {% endfor %}
+                    </div>
+                    <a href="{{ url_for('dashboard') }}" style="text-decoration: none; background: #333; color: #fff; padding: 5px 10px; border-radius: 4px;">Clear Filters / Show All</a>
+                </div>
+
                 <h2>Timetable Entries</h2>
                 <table border="1" cellpadding="8" cellspacing="0">
                         <tr>
@@ -42,9 +60,9 @@
                         {% for row in entries %}
                         <tr>
                                 <td>{{ row.id }}</td>
-                                <td>{{ row.staff_name }}</td>
-                                <td>{{ row.department }}</td>
-                                <td>{{ row.year }}</td>
+                                <td><a href="{{ url_for('dashboard', staff_name=row.staff_name) }}">{{ row.staff_name }}</a></td>
+                                <td><a href="{{ url_for('dashboard', department=row.department) }}">{{ row.department }}</a></td>
+                                <td><a href="{{ url_for('dashboard', year=row.year) }}">{{ row.year }}</a></td>
                                 <td>{{ row.semester }}</td>
                                 <td>{{ row.subject }}</td>
                                 <td>{{ row.day }}</td>
