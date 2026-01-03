@@ -6,6 +6,11 @@ body {
     padding: 0;
 }
 
+.dashboard-page {
+    background: url('background.jpg') no-repeat center center fixed;
+    background-size: cover;
+}
+
 .container {
     width: 85%;
     margin: 40px auto;
