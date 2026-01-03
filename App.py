@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, g, flash, session
+from flask import Flask, render_template, request, redirect, url_for, g, flash, session, make_response
 import os
 import sqlite3
+import csv
+import io
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -190,6 +192,48 @@ def dashboard():
                     schedule[row["day"]][row["time"]] = row
 
     return render_template("dashboard.html", entries=entries, departments=departments, years=years, staff_list=staff_list, time_slots=time_slots, days=days, grid_view=grid_view, schedule=schedule, filter_desc=filter_desc)
+
+# Export Excel Route
+@app.route("/export_excel")
+def export_excel():
+    db = get_db()
+    mode = request.args.get("mode")
+    schedule = {d: {t: "" for t in time_slots} for d in days}
+    filename = "timetable.csv"
+
+    if mode == 'dept':
+        dept = request.args.get("department")
+        yr = request.args.get("year")
+        if dept and yr:
+            filename = f"{dept}_{yr}_timetable.csv"
+            rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=?", (dept, yr)).fetchall()
+            for row in rows:
+                if row["day"] in schedule and row["time"] in schedule[row["day"]]:
+                    # Format: Subject (Staff Name)
+                    schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['staff_name']})"
+
+    elif mode == 'staff':
+        staff = request.args.get("staff_name")
+        if staff:
+            filename = f"{staff}_timetable.csv"
+            rows = db.execute("SELECT * FROM timetable WHERE staff_name=?", (staff,)).fetchall()
+            for row in rows:
+                if row["day"] in schedule and row["time"] in schedule[row["day"]]:
+                    # Format: Subject (Dept - Y:Year)
+                    schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['department']} - Y:{row['year']})"
+
+    # Generate CSV
+    si = io.StringIO()
+    cw = csv.writer(si)
+    cw.writerow(["Day"] + time_slots) # Header
+    for d in days:
+        row_data = [d] + [schedule[d][t] for t in time_slots]
+        cw.writerow(row_data)
+
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    output.headers["Content-type"] = "text/csv"
+    return output
 
 # Check slots route
 @app.route("/check_slots", methods=["GET", "POST"])
