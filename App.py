@@ -160,8 +160,36 @@ def dashboard():
     # Get distinct values for filter buttons
     departments = db.execute("SELECT DISTINCT department FROM timetable WHERE department != '' ORDER BY department").fetchall()
     years = db.execute("SELECT DISTINCT year FROM timetable WHERE year != '' ORDER BY year").fetchall()
+    staff_list = db.execute("SELECT DISTINCT staff_name FROM timetable WHERE staff_name != '' ORDER BY staff_name").fetchall()
 
-    return render_template("dashboard.html", entries=entries, departments=departments, years=years)
+    # Logic for Grid View (Department Wise or Staff Wise)
+    mode = request.args.get("mode")
+    grid_view = False
+    schedule = {d: {t: None for t in time_slots} for d in days}
+    filter_desc = ""
+
+    if mode == 'dept':
+        dept = request.args.get("department")
+        yr = request.args.get("year")
+        if dept and yr:
+            grid_view = True
+            filter_desc = f"Class Timetable: {dept} - Year {yr}"
+            rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=?", (dept, yr)).fetchall()
+            for row in rows:
+                if row["day"] in schedule and row["time"] in schedule[row["day"]]:
+                    schedule[row["day"]][row["time"]] = row
+
+    elif mode == 'staff':
+        staff = request.args.get("staff_name")
+        if staff:
+            grid_view = True
+            filter_desc = f"Staff Timetable: {staff}"
+            rows = db.execute("SELECT * FROM timetable WHERE staff_name=?", (staff,)).fetchall()
+            for row in rows:
+                if row["day"] in schedule and row["time"] in schedule[row["day"]]:
+                    schedule[row["day"]][row["time"]] = row
+
+    return render_template("dashboard.html", entries=entries, departments=departments, years=years, staff_list=staff_list, time_slots=time_slots, days=days, grid_view=grid_view, schedule=schedule, filter_desc=filter_desc)
 
 # Check slots route
 @app.route("/check_slots", methods=["GET", "POST"])

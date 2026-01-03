@@ -27,23 +27,84 @@
                     {% endif %}
                 {% endwith %}
 
-                <!-- Filter Section -->
-                <div style="margin: 20px 0; padding: 15px; background: #f4f4f4; border-radius: 5px;">
-                    <h3>Quick Filters</h3>
-                    <div style="margin-bottom: 10px;">
-                        <strong>Departments:</strong>
-                        {% for dept in departments %}
-                            <a href="{{ url_for('dashboard', department=dept.department) }}" style="margin-right: 5px; text-decoration: none; background: #ddd; padding: 2px 8px; border-radius: 4px; color: #333;">{{ dept.department }}</a>
-                        {% endfor %}
+                <!-- View Options Section -->
+                <div style="margin: 20px 0; padding: 15px; background: #f4f4f4; border-radius: 5px; display: flex; gap: 20px; flex-wrap: wrap;">
+                    
+                    <!-- Option 1: Department Wise -->
+                    <form action="{{ url_for('dashboard') }}" method="GET" style="border: 1px solid #ccc; padding: 15px; border-radius: 5px; background: #fff; flex: 1;">
+                        <h3 style="margin-top: 0;">Department Wise</h3>
+                        <input type="hidden" name="mode" value="dept">
+                        <select name="department" required style="padding: 5px; margin-right: 5px;">
+                            <option value="" disabled selected>Select Department</option>
+                            {% for d in departments %}
+                                <option value="{{ d.department }}" {% if request.args.get('department') == d.department %}selected{% endif %}>{{ d.department }}</option>
+                            {% endfor %}
+                        </select>
+                        <select name="year" required style="padding: 5px; margin-right: 5px;">
+                            <option value="" disabled selected>Select Year</option>
+                            {% for y in years %}
+                                <option value="{{ y.year }}" {% if request.args.get('year') == y.year %}selected{% endif %}>{{ y.year }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" style="padding: 5px 10px; cursor: pointer;">Show Timetable</button>
+                    </form>
+
+                    <!-- Option 2: Staff Wise -->
+                    <form action="{{ url_for('dashboard') }}" method="GET" style="border: 1px solid #ccc; padding: 15px; border-radius: 5px; background: #fff; flex: 1;">
+                        <h3 style="margin-top: 0;">Staff Wise</h3>
+                        <input type="hidden" name="mode" value="staff">
+                        <select name="staff_name" required style="padding: 5px; margin-right: 5px;">
+                            <option value="" disabled selected>Select Staff</option>
+                            {% for s in staff_list %}
+                                <option value="{{ s.staff_name }}" {% if request.args.get('staff_name') == s.staff_name %}selected{% endif %}>{{ s.staff_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" style="padding: 5px 10px; cursor: pointer;">Show Timetable</button>
+                    </form>
+
+                    <div style="flex-basis: 100%; text-align: center; margin-top: 10px;">
+                        <a href="{{ url_for('dashboard') }}" style="text-decoration: none; background: #333; color: #fff; padding: 8px 15px; border-radius: 4px;">Reset / Show All Entries</a>
                     </div>
-                    <div style="margin-bottom: 10px;">
-                        <strong>Years:</strong>
-                        {% for y in years %}
-                            <a href="{{ url_for('dashboard', year=y.year) }}" style="margin-right: 5px; text-decoration: none; background: #ddd; padding: 2px 8px; border-radius: 4px; color: #333;">{{ y.year }}</a>
-                        {% endfor %}
-                    </div>
-                    <a href="{{ url_for('dashboard') }}" style="text-decoration: none; background: #333; color: #fff; padding: 5px 10px; border-radius: 4px;">Clear Filters / Show All</a>
                 </div>
+
+                <!-- Grid View Display -->
+                {% if grid_view %}
+                    <h2 style="color: #2c3e50; border-bottom: 2px solid #2c3e50; padding-bottom: 10px;">{{ filter_desc }}</h2>
+                    <table border="1" cellpadding="8" cellspacing="0" style="width: 100%; margin-bottom: 30px; text-align: center; border-collapse: collapse;">
+                        <thead>
+                            <tr style="background: #333; color: #fff;">
+                                <th>Day / Time</th>
+                                {% for slot in time_slots %}
+                                    <th>{{ slot }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for day in days %}
+                            <tr>
+                                <td style="font-weight: bold; background: #eee;">{{ day }}</td>
+                                {% for slot in time_slots %}
+                                    <td>
+                                        {% set entry = schedule[day][slot] %}
+                                        {% if entry %}
+                                            <div style="background: #e8f5e9; padding: 5px; border-radius: 4px; border: 1px solid #c8e6c9;">
+                                                <strong>{{ entry.subject }}</strong><br>
+                                                {% if request.args.get('mode') == 'dept' %}
+                                                    <span style="font-size: 0.85em; color: #555;">{{ entry.staff_name }}</span>
+                                                {% else %}
+                                                    <span style="font-size: 0.85em; color: #555;">{{ entry.department }} - Y:{{ entry.year }}</span>
+                                                {% endif %}
+                                            </div>
+                                        {% else %}
+                                            <span style="color: #ccc;">-</span>
+                                        {% endif %}
+                                    </td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
 
                 <h2>Timetable Entries</h2>
                 <table border="1" cellpadding="8" cellspacing="0">
