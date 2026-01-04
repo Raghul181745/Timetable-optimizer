@@ -45,6 +45,11 @@ def init_db():
         cursor.execute("ALTER TABLE timetable ADD COLUMN year TEXT DEFAULT ''")
     except sqlite3.OperationalError:
         pass
+    # Attempt to add the 'room' column if it doesn't exist
+    try:
+        cursor.execute("ALTER TABLE timetable ADD COLUMN room TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
@@ -69,24 +74,27 @@ def add_entry():
         year = request.form.get("year", "")
         semester = request.form["semester"]
         subject = request.form["subject"]
+        room = request.form.get("room", "")
         day = request.form["day"]
         time = request.form["time"]
         db = get_db()
         # Smart Conflict Check:
         # 1. Check if the Staff is already booked at this time
         # 2. Check if the Class (Dept + Year + Sem) is already booked at this time
+        # 3. Check if the Room is already booked at this time (if room is specified)
         conflict = db.execute(
             """SELECT * FROM timetable 
                WHERE (staff_name=? AND day=? AND time=?) 
-               OR (department=? AND year=? AND semester=? AND day=? AND time=?)""",
-            (staff_name, day, time, department, year, semester, day, time)
+               OR (department=? AND year=? AND semester=? AND day=? AND time=?)
+               OR (room != '' AND room=? AND day=? AND time=?)""",
+            (staff_name, day, time, department, year, semester, day, time, room, day, time)
         ).fetchone()
         if conflict:
-            flash("⚠️ Conflict detected! Either the Staff or the Class is already booked at this time.")
+            flash("⚠️ Conflict detected! Staff, Class, or Room is already booked at this time.")
             return redirect(url_for("add_entry"))
         db.execute(
-            "INSERT INTO timetable (staff_name, department, year, semester, subject, day, time) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            (staff_name, department, year, semester, subject, day, time)
+            "INSERT INTO timetable (staff_name, department, year, semester, subject, room, day, time) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (staff_name, department, year, semester, subject, room, day, time)
         )
         db.commit()
         flash("✅ Entry added successfully!")
@@ -170,6 +178,14 @@ def dashboard():
     semesters = db.execute("SELECT DISTINCT semester FROM timetable WHERE semester != '' ORDER BY semester").fetchall()
     staff_list = db.execute("SELECT DISTINCT staff_name FROM timetable WHERE staff_name != '' ORDER BY staff_name").fetchall()
 
+    # Analytics Data for Charts
+    dept_counts = db.execute("SELECT department, COUNT(*) as count FROM timetable GROUP BY department").fetchall()
+    staff_counts = db.execute("SELECT staff_name, COUNT(*) as count FROM timetable GROUP BY staff_name").fetchall()
+    
+    # Prepare data for frontend (Lists for Chart.js)
+    dept_analytics = {"labels": [row["department"] for row in dept_counts], "data": [row["count"] for row in dept_counts]}
+    staff_analytics = {"labels": [row["staff_name"] for row in staff_counts], "data": [row["count"] for row in staff_counts]}
+
     # Logic for Grid View (Department Wise or Staff Wise)
     mode = request.args.get("mode")
     grid_view = False
@@ -198,7 +214,7 @@ def dashboard():
                 if row["day"] in schedule and row["time"] in schedule[row["day"]]:
                     schedule[row["day"]][row["time"]] = row
 
-    return render_template("dashboard.html", entries=entries, departments=departments, years=years, semesters=semesters, staff_list=staff_list, time_slots=time_slots, days=days, grid_view=grid_view, schedule=schedule, filter_desc=filter_desc, username=session.get("username", "Guest"))
+    return render_template("dashboard.html", entries=entries, departments=departments, years=years, semesters=semesters, staff_list=staff_list, time_slots=time_slots, days=days, grid_view=grid_view, schedule=schedule, filter_desc=filter_desc, username=session.get("username", "Guest"), dept_analytics=dept_analytics, staff_analytics=staff_analytics)
 
 # Export Excel Route
 @app.route("/export_excel")
@@ -217,8 +233,9 @@ def export_excel():
             rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=? AND semester=?", (dept, yr, sem)).fetchall()
             for row in rows:
                 if row["day"] in schedule and row["time"] in schedule[row["day"]]:
-                    # Format: Subject (Staff Name)
-                    schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['staff_name']})"
+                    # Format: Subject (Staff Name) [Room]
+                    room_str = f" [{row['room']}]" if row['room'] else ""
+                    schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['staff_name']}){room_str}"
 
     elif mode == 'staff':
         staff = request.args.get("staff_name")
@@ -227,8 +244,9 @@ def export_excel():
             rows = db.execute("SELECT * FROM timetable WHERE staff_name=?", (staff,)).fetchall()
             for row in rows:
                 if row["day"] in schedule and row["time"] in schedule[row["day"]]:
-                    # Format: Subject (Dept - Y:Year)
-                    schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['department']} - Y:{row['year']})"
+                    # Format: Subject (Dept - Y:Year) [Room]
+                    room_str = f" [{row['room']}]" if row['room'] else ""
+                    schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['department']} - Y:{row['year']}){room_str}"
 
     # Generate CSV
     si = io.StringIO()
