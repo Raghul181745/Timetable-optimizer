@@ -162,6 +162,7 @@ def dashboard():
     # Get distinct values for filter buttons
     departments = db.execute("SELECT DISTINCT department FROM timetable WHERE department != '' ORDER BY department").fetchall()
     years = db.execute("SELECT DISTINCT year FROM timetable WHERE year != '' ORDER BY year").fetchall()
+    semesters = db.execute("SELECT DISTINCT semester FROM timetable WHERE semester != '' ORDER BY semester").fetchall()
     staff_list = db.execute("SELECT DISTINCT staff_name FROM timetable WHERE staff_name != '' ORDER BY staff_name").fetchall()
 
     # Logic for Grid View (Department Wise or Staff Wise)
@@ -173,10 +174,11 @@ def dashboard():
     if mode == 'dept':
         dept = request.args.get("department")
         yr = request.args.get("year")
-        if dept and yr:
+        sem = request.args.get("semester")
+        if dept and yr and sem:
             grid_view = True
-            filter_desc = f"Class Timetable: {dept} - Year {yr}"
-            rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=?", (dept, yr)).fetchall()
+            filter_desc = f"Class Timetable: {dept} - Year {yr} - Semester {sem}"
+            rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=? AND semester=?", (dept, yr, sem)).fetchall()
             for row in rows:
                 if row["day"] in schedule and row["time"] in schedule[row["day"]]:
                     schedule[row["day"]][row["time"]] = row
@@ -191,7 +193,7 @@ def dashboard():
                 if row["day"] in schedule and row["time"] in schedule[row["day"]]:
                     schedule[row["day"]][row["time"]] = row
 
-    return render_template("dashboard.html", entries=entries, departments=departments, years=years, staff_list=staff_list, time_slots=time_slots, days=days, grid_view=grid_view, schedule=schedule, filter_desc=filter_desc, username=session.get("username", "Guest"))
+    return render_template("dashboard.html", entries=entries, departments=departments, years=years, semesters=semesters, staff_list=staff_list, time_slots=time_slots, days=days, grid_view=grid_view, schedule=schedule, filter_desc=filter_desc, username=session.get("username", "Guest"))
 
 # Export Excel Route
 @app.route("/export_excel")
@@ -204,9 +206,10 @@ def export_excel():
     if mode == 'dept':
         dept = request.args.get("department")
         yr = request.args.get("year")
-        if dept and yr:
-            filename = f"{dept}_{yr}_timetable.csv"
-            rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=?", (dept, yr)).fetchall()
+        sem = request.args.get("semester")
+        if dept and yr and sem:
+            filename = f"{dept}_{yr}_Sem{sem}_timetable.csv"
+            rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=? AND semester=?", (dept, yr, sem)).fetchall()
             for row in rows:
                 if row["day"] in schedule and row["time"] in schedule[row["day"]]:
                     # Format: Subject (Staff Name)
