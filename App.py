@@ -72,12 +72,17 @@ def add_entry():
         day = request.form["day"]
         time = request.form["time"]
         db = get_db()
+        # Smart Conflict Check:
+        # 1. Check if the Staff is already booked at this time
+        # 2. Check if the Class (Dept + Year + Sem) is already booked at this time
         conflict = db.execute(
-            "SELECT * FROM timetable WHERE day=? AND time=?",
-            (day, time)
+            """SELECT * FROM timetable 
+               WHERE (staff_name=? AND day=? AND time=?) 
+               OR (department=? AND year=? AND semester=? AND day=? AND time=?)""",
+            (staff_name, day, time, department, year, semester, day, time)
         ).fetchone()
         if conflict:
-            flash("⚠️ Slot already taken! Please choose another.")
+            flash("⚠️ Conflict detected! Either the Staff or the Class is already booked at this time.")
             return redirect(url_for("add_entry"))
         db.execute(
             "INSERT INTO timetable (staff_name, department, year, semester, subject, day, time) VALUES (?, ?, ?, ?, ?, ?, ?)",
