@@ -101,6 +101,30 @@ def add_entry():
         return redirect(url_for("dashboard"))
     return render_template("add_timetable.html", days=days, time_slots=time_slots)
 
+# Edit entry route
+@app.route("/edit/<int:entry_id>", methods=["GET", "POST"])
+def edit_entry(entry_id):
+    db = get_db()
+    if request.method == "POST":
+        staff_name = request.form["staff_name"]
+        department = request.form["department"]
+        semester = request.form["semester"]
+        subject = request.form["subject"]
+        day = request.form["day"]
+        time = request.form["time"]
+        
+        # Update the entry
+        db.execute(
+            "UPDATE timetable SET staff_name=?, department=?, semester=?, subject=?, day=?, time=? WHERE id=?",
+            (staff_name, department, semester, subject, day, time, entry_id)
+        )
+        db.commit()
+        flash("✏️ Entry updated successfully!")
+        return redirect(url_for("dashboard"))
+    
+    entry = db.execute("SELECT * FROM timetable WHERE id=?", (entry_id,)).fetchone()
+    return render_template("Edit_Timetable.html", entry=entry, days=days, time_slots=time_slots)
+
 # Delete entry route
 @app.route("/delete/<int:entry_id>", methods=["POST"])
 def delete_entry(entry_id):
