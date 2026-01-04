@@ -123,6 +123,12 @@
                                 <th>Day / Time</th>
                                 {% for slot in time_slots %}
                                     <th>{{ slot }}</th>
+                                    {% if slot == "9:20 - 10:10" %}
+                                        <th style="background: #dcdcdc; color: #333; width: 25px; padding: 5px; writing-mode: vertical-rl; text-orientation: mixed; vertical-align: middle; font-size: 12px;">Break</th>
+                                    {% endif %}
+                                    {% if slot == "11:10 - 12:00" %}
+                                        <th style="background: #dcdcdc; color: #333; width: 25px; padding: 5px; writing-mode: vertical-rl; text-orientation: mixed; vertical-align: middle; font-size: 12px;">Lunch</th>
+                                    {% endif %}
                                 {% endfor %}
                             </tr>
                         </thead>
@@ -146,6 +152,12 @@
                                             <span style="color: #ccc;">-</span>
                                         {% endif %}
                                     </td>
+                                    {% if slot == "9:20 - 10:10" %}
+                                        <td style="background: #f0f0f0; writing-mode: vertical-rl; text-orientation: mixed; font-weight: bold; color: #777; padding: 2px; vertical-align: middle; text-align: center; font-size: 11px;">BREAK</td>
+                                    {% endif %}
+                                    {% if slot == "11:10 - 12:00" %}
+                                        <td style="background: #f0f0f0; writing-mode: vertical-rl; text-orientation: mixed; font-weight: bold; color: #777; padding: 2px; vertical-align: middle; text-align: center; font-size: 11px;">LUNCH</td>
+                                    {% endif %}
                                 {% endfor %}
                             </tr>
                             {% endfor %}
