@@ -80,6 +80,12 @@
                                 <option value="{{ y.year }}" {% if request.args.get('year') == y.year %}selected{% endif %}>{{ y.year }}</option>
                             {% endfor %}
                         </select>
+                        <select name="semester" required style="padding: 5px; margin-right: 5px;">
+                            <option value="" disabled selected>Select Semester</option>
+                            {% for s in semesters %}
+                                <option value="{{ s.semester }}" {% if request.args.get('semester') == s.semester %}selected{% endif %}>{{ s.semester }}</option>
+                            {% endfor %}
+                        </select>
                         <button type="submit" style="padding: 5px 10px; cursor: pointer;">Show Timetable</button>
                     </form>
 
