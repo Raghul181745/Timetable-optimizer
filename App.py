@@ -315,38 +315,41 @@ def export_excel():
         
         if slot == "9:20 - 10:10":
             ws.cell(row=1, column=col_idx, value="BREAK").font = bold_font
-            ws.column_dimensions[get_column_letter(col_idx)].width = 5 # Narrow column
+            ws.column_dimensions[get_column_letter(col_idx)].width = 3 # Narrow column
             break_col_idx = col_idx
             col_idx += 1
             
         if slot == "11:10 - 12:00":
             ws.cell(row=1, column=col_idx, value="LUNCH").font = bold_font
-            ws.column_dimensions[get_column_letter(col_idx)].width = 5 # Narrow column
+            ws.column_dimensions[get_column_letter(col_idx)].width = 3 # Narrow column
             lunch_col_idx = col_idx
             col_idx += 1
 
     # Write Data Rows
+    break_letters = ["B", "R", "E", "A", "K"]
+    lunch_letters = ["L", "U", "N", "C", "H"]
+
     for row_idx, d in enumerate(days, start=2):
+        day_index = row_idx - 2
         ws.cell(row=row_idx, column=1, value=d).alignment = center_align
         for slot in time_slots:
             val = schedule[d][slot] or "-"
             ws.cell(row=row_idx, column=col_map[slot], value=val).alignment = center_align
+        
+        # Add Break Letter (B, R, E, A, K)
+        if break_col_idx != -1 and day_index < len(break_letters):
+            cell = ws.cell(row=row_idx, column=break_col_idx, value=break_letters[day_index])
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.font = bold_font
 
-    # Merge Break and Lunch Columns (Vertical)
-    end_row = 2 + len(days) - 1
-    if break_col_idx != -1:
-        ws.merge_cells(start_row=2, start_column=break_col_idx, end_row=end_row, end_column=break_col_idx)
-        cell = ws.cell(row=2, column=break_col_idx, value="BREAK")
-        cell.alignment = Alignment(text_rotation=90, horizontal='center', vertical='center')
-        cell.font = bold_font
-
-    if lunch_col_idx != -1:
-        ws.merge_cells(start_row=2, start_column=lunch_col_idx, end_row=end_row, end_column=lunch_col_idx)
-        cell = ws.cell(row=2, column=lunch_col_idx, value="LUNCH")
-        cell.alignment = Alignment(text_rotation=90, horizontal='center', vertical='center')
-        cell.font = bold_font
+        # Add Lunch Letter (L, U, N, C, H)
+        if lunch_col_idx != -1 and day_index < len(lunch_letters):
+            cell = ws.cell(row=row_idx, column=lunch_col_idx, value=lunch_letters[day_index])
+            cell.alignment = Alignment(horizontal='center', vertical='center')
+            cell.font = bold_font
 
     # Apply borders
+    end_row = 2 + len(days) - 1
     for row in ws.iter_rows(min_row=1, max_row=end_row, min_col=1, max_col=col_idx-1):
         for cell in row:
             cell.border = border
@@ -409,7 +412,7 @@ def export_pdf():
             table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
             th, td {{ border: 1px solid #444; padding: 6px; text-align: center; font-size: 10px; }}
             th {{ background-color: #f2f2f2; font-weight: bold; }}
-            .break-col {{ background-color: #e0e0e0; color: #555; font-weight: bold; vertical-align: middle; width: 20px; }}
+            .break-col {{ background-color: #e0e0e0; color: #555; font-weight: bold; vertical-align: middle; width: 15px; }}
             .day {{ background-color: #eee; font-weight: bold; width: 80px; }}
         </style>
     </head>
@@ -419,18 +422,26 @@ def export_pdf():
             <thead>
                 <tr>
                     <th>Day / Time</th>
-                    {''.join([f'<th>{t}</th>' + ('<th class="break">BREAK</th>' if t == "9:20 - 10:10" else '') + ('<th class="break">LUNCH</th>' if t == "11:10 - 12:00" else '') for t in time_slots])}
+                    {''.join([f'<th>{t}</th>' + ('<th class="break-col">BREAK</th>' if t == "9:20 - 10:10" else '') + ('<th class="break-col">LUNCH</th>' if t == "11:10 - 12:00" else '') for t in time_slots])}
                 </tr>
             </thead>
             <tbody>
-                {''.join([
-                    f'<tr><td class="day">{d}</td>' + 
-                    ''.join([f'<td>{schedule[d][t] or "-"}</td>' + 
-                            ('<td class="break">B</td>' if t == "9:20 - 10:10" else '') + 
-                            ('<td class="break">L</td>' if t == "11:10 - 12:00" else '') 
-                    for t in time_slots]) + 
-                    '</tr>' 
-                for d in days])}
+    """
+    
+    break_letters = ["B", "R", "E", "A", "K"]
+    lunch_letters = ["L", "U", "N", "C", "H"]
+
+    for i, d in enumerate(days):
+        html_content += f'<tr><td class="day">{d}</td>'
+        for t in time_slots:
+            html_content += f'<td>{schedule[d][t] or "-"}</td>'
+            if t == "9:20 - 10:10":
+                html_content += f'<td class="break-col">{break_letters[i] if i < len(break_letters) else ""}</td>'
+            if t == "11:10 - 12:00":
+                html_content += f'<td class="break-col">{lunch_letters[i] if i < len(lunch_letters) else ""}</td>'
+        html_content += '</tr>'
+
+    html_content += """
             </tbody>
         </table>
     </body>
