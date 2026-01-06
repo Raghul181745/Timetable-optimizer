@@ -314,13 +314,13 @@ def export_excel():
         col_idx += 1
         
         if slot == "9:20 - 10:10":
-            ws.cell(row=1, column=col_idx, value="BREAK").font = bold_font
+            ws.cell(row=1, column=col_idx, value="").font = bold_font
             ws.column_dimensions[get_column_letter(col_idx)].width = 3 # Narrow column
             break_col_idx = col_idx
             col_idx += 1
             
         if slot == "11:10 - 12:00":
-            ws.cell(row=1, column=col_idx, value="LUNCH").font = bold_font
+            ws.cell(row=1, column=col_idx, value="").font = bold_font
             ws.column_dimensions[get_column_letter(col_idx)].width = 3 # Narrow column
             lunch_col_idx = col_idx
             col_idx += 1
@@ -422,7 +422,7 @@ def export_pdf():
             <thead>
                 <tr>
                     <th>Day / Time</th>
-                    {''.join([f'<th>{t}</th>' + ('<th class="break-col">BREAK</th>' if t == "9:20 - 10:10" else '') + ('<th class="break-col">LUNCH</th>' if t == "11:10 - 12:00" else '') for t in time_slots])}
+                    {''.join([f'<th>{t}</th>' + ('<th class="break-col"></th>' if t == "9:20 - 10:10" else '') + ('<th class="break-col"></th>' if t == "11:10 - 12:00" else '') for t in time_slots])}
                 </tr>
             </thead>
             <tbody>
