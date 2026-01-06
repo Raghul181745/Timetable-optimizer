@@ -4,6 +4,9 @@ import sqlite3
 import csv
 import io
 from xhtml2pdf import pisa
+import openpyxl
+from openpyxl.styles import Alignment, Font, Border, Side
+from openpyxl.utils import get_column_letter
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -257,14 +260,14 @@ def export_excel():
     # Try to get params from URL, otherwise fall back to session
     mode = request.args.get("mode") or session.get('export_mode')
     schedule = {d: {t: "" for t in time_slots} for d in days}
-    filename = "timetable.csv"
+    filename = "timetable.xlsx"
 
     if mode == 'dept':
         dept = request.args.get("department") or session.get('export_dept')
         yr = request.args.get("year") or session.get('export_year')
         sem = request.args.get("semester") or session.get('export_sem')
         if dept and yr and sem:
-            filename = f"{dept}_{yr}_Sem{sem}_timetable.csv"
+            filename = f"{dept}_{yr}_Sem{sem}_timetable.xlsx"
             rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=? AND semester=?", (dept, yr, sem)).fetchall()
             for row in rows:
                 if row["day"] in schedule and row["time"] in schedule[row["day"]]:
@@ -275,7 +278,7 @@ def export_excel():
     elif mode == 'staff':
         staff = request.args.get("staff_name") or session.get('export_staff')
         if staff:
-            filename = f"{staff}_timetable.csv"
+            filename = f"{staff}_timetable.xlsx"
             rows = db.execute("SELECT * FROM timetable WHERE staff_name=?", (staff,)).fetchall()
             for row in rows:
                 if row["day"] in schedule and row["time"] in schedule[row["day"]]:
@@ -283,33 +286,74 @@ def export_excel():
                     room_str = f" [{row['room']}]" if row['room'] else ""
                     schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['department']} - Y:{row['year']}){room_str}"
 
-    # Generate CSV
-    si = io.StringIO()
-    cw = csv.writer(si)
+    # Generate Excel with openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Timetable"
     
-    # Create Header Row with Breaks to match visual table
-    header = ["Day"]
+    # Styles
+    bold_font = Font(bold=True)
+    center_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
+    border = Border(left=Side(style='thin'), right=Side(style='thin'), top=Side(style='thin'), bottom=Side(style='thin'))
+    
+    # Write Header Row
+    ws.cell(row=1, column=1, value="Day").font = bold_font
+    
+    col_idx = 2
+    col_map = {} # Map slot time to column index
+    break_col_idx = -1
+    lunch_col_idx = -1
+
     for slot in time_slots:
-        header.append(slot)
+        ws.cell(row=1, column=col_idx, value=slot).font = bold_font
+        col_map[slot] = col_idx
+        col_idx += 1
+        
         if slot == "9:20 - 10:10":
-            header.append("BREAK")
+            ws.cell(row=1, column=col_idx, value="BREAK").font = bold_font
+            ws.column_dimensions[get_column_letter(col_idx)].width = 5 # Narrow column
+            break_col_idx = col_idx
+            col_idx += 1
+            
         if slot == "11:10 - 12:00":
-            header.append("LUNCH")
-    cw.writerow(header)
+            ws.cell(row=1, column=col_idx, value="LUNCH").font = bold_font
+            ws.column_dimensions[get_column_letter(col_idx)].width = 5 # Narrow column
+            lunch_col_idx = col_idx
+            col_idx += 1
 
-    for d in days:
-        row_data = [d]
+    # Write Data Rows
+    for row_idx, d in enumerate(days, start=2):
+        ws.cell(row=row_idx, column=1, value=d).alignment = center_align
         for slot in time_slots:
-            row_data.append(schedule[d][slot])
-            if slot == "9:20 - 10:10":
-                row_data.append("BREAK")
-            if slot == "11:10 - 12:00":
-                row_data.append("LUNCH")
-        cw.writerow(row_data)
+            val = schedule[d][slot] or "-"
+            ws.cell(row=row_idx, column=col_map[slot], value=val).alignment = center_align
 
-    output = make_response(si.getvalue())
+    # Merge Break and Lunch Columns (Vertical)
+    end_row = 2 + len(days) - 1
+    if break_col_idx != -1:
+        ws.merge_cells(start_row=2, start_column=break_col_idx, end_row=end_row, end_column=break_col_idx)
+        cell = ws.cell(row=2, column=break_col_idx, value="BREAK")
+        cell.alignment = Alignment(text_rotation=90, horizontal='center', vertical='center')
+        cell.font = bold_font
+
+    if lunch_col_idx != -1:
+        ws.merge_cells(start_row=2, start_column=lunch_col_idx, end_row=end_row, end_column=lunch_col_idx)
+        cell = ws.cell(row=2, column=lunch_col_idx, value="LUNCH")
+        cell.alignment = Alignment(text_rotation=90, horizontal='center', vertical='center')
+        cell.font = bold_font
+
+    # Apply borders
+    for row in ws.iter_rows(min_row=1, max_row=end_row, min_col=1, max_col=col_idx-1):
+        for cell in row:
+            cell.border = border
+
+    out = io.BytesIO()
+    wb.save(out)
+    out.seek(0)
+
+    output = make_response(out.getvalue())
     output.headers["Content-Disposition"] = f"attachment; filename={filename}"
-    output.headers["Content-type"] = "text/csv"
+    output.headers["Content-type"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
     return output
 
 @app.route("/export_pdf")
@@ -355,7 +399,7 @@ def export_pdf():
             table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
             th, td {{ border: 1px solid #444; padding: 6px; text-align: center; font-size: 10px; }}
             th {{ background-color: #f2f2f2; font-weight: bold; }}
-            .break {{ background-color: #e0e0e0; color: #555; font-weight: bold; width: 20px; }}
+            .break-col {{ background-color: #e0e0e0; color: #555; font-weight: bold; vertical-align: middle; width: 20px; }}
             .day {{ background-color: #eee; font-weight: bold; width: 80px; }}
         </style>
     </head>
