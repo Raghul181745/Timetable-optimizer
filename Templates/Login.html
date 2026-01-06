@@ -3,6 +3,76 @@
 <head>
     <meta charset="UTF-8">
     <title>Login - Timetable System</title>
+    <style>
+    body {
+        background: #cfdef3 url("{{ url_for('static', filename='background.jpg') }}") no-repeat center center fixed;
+        background-size: cover;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+    .container {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 40px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        width: 100%;
+        max-width: 400px;
+        text-align: center;
+    }
+    h2 {
+        color: #333;
+        margin-bottom: 20px;
+    }
+    label {
+        display: block;
+        text-align: left;
+        margin-bottom: 5px;
+        color: #666;
+        font-weight: 600;
+    }
+    input[type="text"], input[type="password"] {
+        width: 100%;
+        padding: 12px;
+        margin-bottom: 20px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        box-sizing: border-box;
+        font-size: 14px;
+    }
+    button {
+        width: 100%;
+        padding: 12px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: transform 0.2s;
+    }
+    button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    .flash-messages {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 20px;
+    }
+    .flash-messages li {
+        background: #fee;
+        color: #c0392b;
+        padding: 10px;
+        border-radius: 4px;
+        border: 1px solid #f5c6cb;
+    }
+</style>
+
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
