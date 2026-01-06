@@ -212,6 +212,15 @@ def dashboard():
 
     # Logic for Grid View (Department Wise or Staff Wise)
     mode = request.args.get("mode")
+    
+    # Save current view settings to session for Export functionality
+    if mode:
+        session['export_mode'] = mode
+        session['export_dept'] = request.args.get("department")
+        session['export_year'] = request.args.get("year")
+        session['export_sem'] = request.args.get("semester")
+        session['export_staff'] = request.args.get("staff_name")
+
     grid_view = False
     schedule = {d: {t: None for t in time_slots} for d in days}
     filter_desc = ""
@@ -244,14 +253,15 @@ def dashboard():
 @app.route("/export_excel")
 def export_excel():
     db = get_db()
-    mode = request.args.get("mode")
+    # Try to get params from URL, otherwise fall back to session
+    mode = request.args.get("mode") or session.get('export_mode')
     schedule = {d: {t: "" for t in time_slots} for d in days}
     filename = "timetable.csv"
 
     if mode == 'dept':
-        dept = request.args.get("department")
-        yr = request.args.get("year")
-        sem = request.args.get("semester")
+        dept = request.args.get("department") or session.get('export_dept')
+        yr = request.args.get("year") or session.get('export_year')
+        sem = request.args.get("semester") or session.get('export_sem')
         if dept and yr and sem:
             filename = f"{dept}_{yr}_Sem{sem}_timetable.csv"
             rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=? AND semester=?", (dept, yr, sem)).fetchall()
@@ -262,7 +272,7 @@ def export_excel():
                     schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['staff_name']}){room_str}"
 
     elif mode == 'staff':
-        staff = request.args.get("staff_name")
+        staff = request.args.get("staff_name") or session.get('export_staff')
         if staff:
             filename = f"{staff}_timetable.csv"
             rows = db.execute("SELECT * FROM timetable WHERE staff_name=?", (staff,)).fetchall()
