@@ -3,10 +3,6 @@ import os
 import sqlite3
 import csv
 import io
-from xhtml2pdf import pisa
-import openpyxl
-from openpyxl.styles import Alignment, Font, Border, Side
-from openpyxl.utils import get_column_letter
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -257,6 +253,14 @@ def dashboard():
 @app.route("/export_excel")
 def export_excel():
     db = get_db()
+    try:
+        import openpyxl
+        from openpyxl.styles import Alignment, Font, Border, Side
+        from openpyxl.utils import get_column_letter
+    except ImportError:
+        flash("Error: 'openpyxl' library is missing. Please install it using 'pip install openpyxl'.")
+        return redirect(url_for('dashboard'))
+
     # Try to get params from URL, otherwise fall back to session
     mode = request.args.get("mode") or session.get('export_mode')
     schedule = {d: {t: "" for t in time_slots} for d in days}
@@ -359,6 +363,12 @@ def export_excel():
 @app.route("/export_pdf")
 def export_pdf():
     db = get_db()
+    try:
+        from xhtml2pdf import pisa
+    except ImportError:
+        flash("Error: 'xhtml2pdf' library is missing. Please install it using 'pip install xhtml2pdf'.")
+        return redirect(url_for('dashboard'))
+
     mode = request.args.get("mode") or session.get('export_mode')
     schedule = {d: {t: "" for t in time_slots} for d in days}
     filename = "timetable.pdf"
