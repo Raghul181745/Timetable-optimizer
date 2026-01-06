@@ -114,7 +114,7 @@
                     
                     <div class="no-print" style="margin-bottom: 15px;">
                         <a href="{{ url_for('export_excel', mode=request.args.get('mode'), department=request.args.get('department'), year=request.args.get('year'), staff_name=request.args.get('staff_name')) }}" style="text-decoration: none; background: #27ae60; color: white; padding: 8px 15px; border-radius: 4px; margin-right: 10px;">Export to Excel</a>
-                        <button onclick="window.print()" style="background: #e74c3c; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-size: 1em;">Print / Save as PDF</button>
+                        <a href="{{ url_for('export_pdf', mode=request.args.get('mode'), department=request.args.get('department'), year=request.args.get('year'), staff_name=request.args.get('staff_name')) }}" style="text-decoration: none; background: #e74c3c; color: white; padding: 8px 15px; border-radius: 4px; font-size: 1em;">Download PDF</a>
                     </div>
 
                     <table border="1" cellpadding="8" cellspacing="0" style="width: 100%; margin-bottom: 30px; text-align: center; border-collapse: collapse;">

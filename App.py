@@ -3,6 +3,7 @@ import os
 import sqlite3
 import csv
 import io
+from xhtml2pdf import pisa
 
 app = Flask(__name__)
 app.secret_key = "secret123"
@@ -285,15 +286,114 @@ def export_excel():
     # Generate CSV
     si = io.StringIO()
     cw = csv.writer(si)
-    cw.writerow(["Day"] + time_slots) # Header
+    
+    # Create Header Row with Breaks to match visual table
+    header = ["Day"]
+    for slot in time_slots:
+        header.append(slot)
+        if slot == "9:20 - 10:10":
+            header.append("BREAK")
+        if slot == "11:10 - 12:00":
+            header.append("LUNCH")
+    cw.writerow(header)
+
     for d in days:
-        row_data = [d] + [schedule[d][t] for t in time_slots]
+        row_data = [d]
+        for slot in time_slots:
+            row_data.append(schedule[d][slot])
+            if slot == "9:20 - 10:10":
+                row_data.append("BREAK")
+            if slot == "11:10 - 12:00":
+                row_data.append("LUNCH")
         cw.writerow(row_data)
 
     output = make_response(si.getvalue())
     output.headers["Content-Disposition"] = f"attachment; filename={filename}"
     output.headers["Content-type"] = "text/csv"
     return output
+
+@app.route("/export_pdf")
+def export_pdf():
+    db = get_db()
+    mode = request.args.get("mode") or session.get('export_mode')
+    schedule = {d: {t: "" for t in time_slots} for d in days}
+    filename = "timetable.pdf"
+    title = "Timetable"
+
+    if mode == 'dept':
+        dept = request.args.get("department") or session.get('export_dept')
+        yr = request.args.get("year") or session.get('export_year')
+        sem = request.args.get("semester") or session.get('export_sem')
+        if dept and yr and sem:
+            filename = f"{dept}_{yr}_Sem{sem}_timetable.pdf"
+            title = f"Department: {dept} | Year: {yr} | Sem: {sem}"
+            rows = db.execute("SELECT * FROM timetable WHERE department=? AND year=? AND semester=?", (dept, yr, sem)).fetchall()
+            for row in rows:
+                if row["day"] in schedule and row["time"] in schedule[row["day"]]:
+                    room_str = f" [{row['room']}]" if row['room'] else ""
+                    schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['staff_name']}){room_str}"
+
+    elif mode == 'staff':
+        staff = request.args.get("staff_name") or session.get('export_staff')
+        if staff:
+            filename = f"{staff}_timetable.pdf"
+            title = f"Staff: {staff}"
+            rows = db.execute("SELECT * FROM timetable WHERE staff_name=?", (staff,)).fetchall()
+            for row in rows:
+                if row["day"] in schedule and row["time"] in schedule[row["day"]]:
+                    room_str = f" [{row['room']}]" if row['room'] else ""
+                    schedule[row["day"]][row["time"]] = f"{row['subject']} ({row['department']} - Y:{row['year']}){room_str}"
+
+    # Generate HTML for PDF
+    html_content = f"""
+    <html>
+    <head>
+        <style>
+            @page {{ size: landscape; margin: 1cm; }}
+            body {{ font-family: Helvetica, sans-serif; }}
+            h2 {{ text-align: center; color: #333; }}
+            table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+            th, td {{ border: 1px solid #444; padding: 6px; text-align: center; font-size: 10px; }}
+            th {{ background-color: #f2f2f2; font-weight: bold; }}
+            .break {{ background-color: #e0e0e0; color: #555; font-weight: bold; width: 20px; }}
+            .day {{ background-color: #eee; font-weight: bold; width: 80px; }}
+        </style>
+    </head>
+    <body>
+        <h2>{title}</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Day / Time</th>
+                    {''.join([f'<th>{t}</th>' + ('<th class="break">BREAK</th>' if t == "9:20 - 10:10" else '') + ('<th class="break">LUNCH</th>' if t == "11:10 - 12:00" else '') for t in time_slots])}
+                </tr>
+            </thead>
+            <tbody>
+                {''.join([
+                    f'<tr><td class="day">{d}</td>' + 
+                    ''.join([f'<td>{schedule[d][t] or "-"}</td>' + 
+                            ('<td class="break">B</td>' if t == "9:20 - 10:10" else '') + 
+                            ('<td class="break">L</td>' if t == "11:10 - 12:00" else '') 
+                    for t in time_slots]) + 
+                    '</tr>' 
+                for d in days])}
+            </tbody>
+        </table>
+    </body>
+    </html>
+    """
+
+    # Create PDF
+    pdf = io.BytesIO()
+    pisa_status = pisa.CreatePDF(io.StringIO(html_content), dest=pdf)
+
+    if pisa_status.err:
+        return "Error generating PDF", 500
+
+    response = make_response(pdf.getvalue())
+    response.headers['Content-Type'] = 'application/pdf'
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    return response
 
 # Check slots route
 @app.route("/check_slots", methods=["GET", "POST"])
