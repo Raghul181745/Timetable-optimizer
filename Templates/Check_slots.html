@@ -2,102 +2,167 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Check Slots</title>
+    <title>Check Slots - Timetable System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f9f9f9;
+            background: #cfdef3 url("{{ url_for('static', filename='background.jpg') }}") no-repeat center center fixed;
+            background-size: cover;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
         }
-        h1 {
-            text-align: center;
-            color: #333;
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
+        h2 { color: #2c3e50; text-align: center; margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        
+        /* Form Styles */
+        .form-card {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            justify-content: center;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label { font-weight: 600; color: #555; margin-bottom: 5px; font-size: 0.9em; }
+        input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        
+        /* Buttons */
+        button {
+            padding: 10px 20px;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s;
+        }
+        button:hover { transform: translateY(-2px); }
+        .btn-check { background: linear-gradient(135deg, #3498db 0%, #2980b9 100%); }
+        .btn-auto { background: linear-gradient(135deg, #27ae60 0%, #219150 100%); }
+        .btn-delete { background: #e74c3c; padding: 4px 8px; font-size: 11px; margin-left: 5px; }
+
+        /* Table */
         table {
-            width: 90%;
-            margin: 20px auto;
-            border-collapse: collapse;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            margin-top: 20px;
             background: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
+        th { background-color: #2c3e50; color: white; font-weight: 600; }
+        tr:hover { background-color: #f9f9f9; }
+        
+        .slot-free { color: #27ae60; font-weight: bold; background: #e8f5e9; }
+        .slot-occupied { background: #fff5f5; color: #c0392b; font-size: 0.9em; }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            color: #555;
+            text-decoration: none;
+            font-weight: 600;
+            padding: 10px 20px;
+            background: #fff;
+            border-radius: 50px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
-            text-align: center;
-        }
-        th {
-            background: #4CAF50;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background: #f2f2f2;
-        }
-        a {
-            display: block;
-            width: fit-content;
-            margin: 20px auto;
-            padding: 10px 15px;
-            text-decoration: none;
-            color: white;
-            background: #4CAF50;
-            border-radius: 5px;
-        }
-        a:hover {
-            background: #45a049;
-        }
+        .back-link:hover { background: #f0f0f0; color: #333; }
+        
+        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
     </style>
 </head>
 <body>
-    <h1>Check Available Slots</h1>
+    <div class="container">
+        <h2>Check & Optimize Slots</h2>
 
+        <div class="form-card">
+            <form method="POST" class="form-row">
+                <div class="form-group">
+                    <label>Staff Name</label>
+                    <input type="text" name="staff_name" value="{{ staff_name or '' }}" required placeholder="Enter Name">
+                </div>
+                <div class="form-group">
+                    <label>Department</label>
+                    <input type="text" name="department" value="{{ department or '' }}" required placeholder="Enter Dept">
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <input type="text" name="year" value="{{ request.form.get('year', '') }}" placeholder="Year" style="width: 80px;">
+                </div>
+                <div class="form-group">
+                    <label>Sem</label>
+                    <input type="text" name="semester" value="{{ request.form.get('semester', '') }}" placeholder="Sem" style="width: 80px;">
+                </div>
+                <button type="submit" class="btn-check">Check Slots</button>
+            </form>
+        </div>
 
-    <form method="POST" style="margin-bottom: 20px;">
-        <label>Staff Name:</label>
-        <input type="text" name="staff_name" value="{{ staff_name or '' }}" required>
-        <label>Department:</label>
-        <input type="text" name="department" value="{{ department or '' }}" required>
-        <label>Year:</label>
-        <input type="text" name="year" value="{{ request.form.get('year', '') }}">
-        <label>Semester:</label>
-        <input type="text" name="semester" value="{{ request.form.get('semester', '') }}">
-        <button type="submit">Check</button>
-    </form>
-
-    <form method="POST" style="margin-bottom: 20px;">
-        <input type="hidden" name="staff_name" value="{{ staff_name or '' }}">
-        <input type="hidden" name="department" value="{{ department or '' }}">
-        <input type="hidden" name="year" value="{{ request.form.get('year', '') }}">
-        <input type="hidden" name="semester" value="{{ request.form.get('semester', '') }}">
-        <label>Auto Assign Subject:</label>
-        <input type="text" name="subject" placeholder="Subject">
-        <button type="submit" name="auto_assign" value="1">Auto Assign</button>
-    </form>
+        <div class="form-card">
+            <form method="POST" class="form-row">
+                <input type="hidden" name="staff_name" value="{{ staff_name or '' }}">
+                <input type="hidden" name="department" value="{{ department or '' }}">
+                <input type="hidden" name="year" value="{{ request.form.get('year', '') }}">
+                <input type="hidden" name="semester" value="{{ request.form.get('semester', '') }}">
+                <div class="form-group" style="flex-grow: 1; max-width: 300px;">
+                    <label>Auto Assign Subject</label>
+                    <input type="text" name="subject" placeholder="Enter Subject Name">
+                </div>
+                <button type="submit" name="auto_assign" value="1" class="btn-auto">Auto Assign</button>
+            </form>
+        </div>
 
     {% if message %}
-        <p style="color: green;">{{ message }}</p>
+        <div class="alert">{{ message }}</div>
     {% endif %}
 
     {% if slots %}
     <table>
         <thead>
             <tr>
-                <th>Day</th>
+                <th>Day / Slot</th>
                 {% for i in range(slots|length) %}
-                    <th>{{ i+1 }}</th>
+                    <th>Slot {{ i+1 }}</th>
                 {% endfor %}
             </tr>
         </thead>
         <tbody>
             {% for day_idx in range(days|length) %}
             <tr>
-                <td>{{ days[day_idx] }}</td>
+                <td style="font-weight: bold; background: #f8f9fa;">{{ days[day_idx] }}</td>
                 {% for slot in slots %}
-                    <td>
-                        {% set cell = slot.slots[day_idx] %}
+                    {% set cell = slot.slots[day_idx] %}
+                    <td class="{{ 'slot-occupied' if cell.entry_id else 'slot-free' }}">
                         {% if cell.entry_id %}
                             {{ cell.subject }}
                             <form method="POST" action="{{ url_for('delete_slot', entry_id=cell.entry_id) }}" style="display:inline;">
-                                <button type="submit" onclick="return confirm('Delete this slot?');">Delete</button>
+                                <button type="submit" class="btn-delete" onclick="return confirm('Delete this slot?');">✕</button>
                             </form>
                         {% else %}
                             Free
@@ -109,9 +174,12 @@
         </tbody>
     </table>
     {% else %}
-    <p>No slots available. Please search for a staff and department.</p>
+    <p style="text-align: center; color: #777; margin-top: 20px;">Please search for a staff and department to view availability.</p>
     {% endif %}
 
-    <a href="{{ url_for('dashboard') }}">Back to Dashboard</a>
+    <div style="text-align: center;">
+        <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
+    </div>
+    </div>
 </body>
 </html>
