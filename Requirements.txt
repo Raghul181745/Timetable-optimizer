@@ -1,0 +1,3 @@
+flask
+openpyxl
+xhtml2pdf
