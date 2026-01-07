@@ -554,4 +554,7 @@ def logout():
 # Main
 if __name__ == "__main__":
     init_db()
-    app.run(debug=True, host='0.0.0.0')
+    port = int(os.environ.get("PORT", 5000))
+    # Default to debug=True for local, but allow turning it off via env var
+    debug_mode = os.environ.get("FLASK_DEBUG", "True").lower() == "true"
+    app.run(debug=debug_mode, host='0.0.0.0', port=port)
