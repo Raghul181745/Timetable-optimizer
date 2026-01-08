@@ -84,6 +84,20 @@
                 display: none !important;
             }
         }
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .charts-container {
+                flex-direction: column;
+                height: auto !important;
+            }
+            .charts-container > div {
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .table-responsive {
+                overflow-x: auto;
+            }
+        }
     </style>
 </head>
 <body class="dashboard-page">
@@ -109,7 +123,7 @@
                 {% endwith %}
 
                 <!-- Analytics Charts -->
-                <div class="no-print" style="display: flex; gap: 20px; margin-bottom: 20px; height: 300px;">
+                <div class="no-print charts-container" style="display: flex; gap: 20px; margin-bottom: 20px; height: 300px;">
                     <div style="flex: 1; background: white; padding: 15px; border-radius: 5px; border: 1px solid #ccc;">
                         <canvas id="deptChart"></canvas>
                     </div>
@@ -174,6 +188,7 @@
                         <a href="{{ url_for('export_pdf', mode=request.args.get('mode'), department=request.args.get('department'), year=request.args.get('year'), staff_name=request.args.get('staff_name')) }}" style="text-decoration: none; background: #e74c3c; color: white; padding: 8px 15px; border-radius: 4px; font-size: 1em;">Download PDF</a>
                     </div>
 
+                    <div class="table-responsive">
                     <table border="1" cellpadding="8" cellspacing="0" style="width: 100%; margin-bottom: 30px; text-align: center; border-collapse: collapse;">
                         <thead>
                             <tr style="background: #333; color: #fff;">
@@ -220,10 +235,12 @@
                             {% endfor %}
                         </tbody>
                     </table>
+                    </div>
                 </div>
                 {% endif %}
 
                 <h2>Timetable Entries</h2>
+                <div class="table-responsive">
                 <table border="1" cellpadding="8" cellspacing="0">
                         <tr>
                                 <th>ID</th>
@@ -255,6 +272,7 @@
                         </tr>
                         {% endfor %}
                 </table>
+                </div>
         </div>
     <script>
         // Parse data passed from Flask (Wrapped in quotes to prevent IDE syntax errors)
