@@ -97,6 +97,9 @@
         .back-link:hover { background: #f0f0f0; color: #333; }
         
         .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        
+        /* Mobile Scroll */
+        .table-responsive { overflow-x: auto; }
     </style>
 </head>
 <body>
@@ -144,6 +147,7 @@
     {% endif %}
 
     {% if slots %}
+    <div class="table-responsive">
     <table>
         <thead>
             <tr>
@@ -174,6 +178,7 @@
             {% endfor %}
         </tbody>
     </table>
+    </div>
     {% else %}
     <p style="text-align: center; color: #777; margin-top: 20px;">Please search for a staff and department to view availability.</p>
     {% endif %}
