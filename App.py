@@ -467,7 +467,9 @@ def check_slots():
     staff_name = None
     department = None
     message = None
+    mode = "staff"
     if request.method == "POST":
+        mode = request.form.get("mode", "staff")
         staff_name = request.form.get("staff_name")
         department = request.form.get("department")
         year = request.form.get("year", "")
@@ -499,10 +501,16 @@ def check_slots():
             if not assigned:
                 message = "No free slot available for auto-assign."
             # Refresh used_slots after auto-assign
-            used = db.execute(
-                "SELECT day, time, staff_name, subject, year, semester, id FROM timetable WHERE staff_name=? AND department=?",
-                (staff_name, department)
-            ).fetchall()
+            if mode == 'dept':
+                used = db.execute(
+                    "SELECT day, time, staff_name, subject, year, semester, id FROM timetable WHERE department=? AND year=? AND semester=?",
+                    (department, year, semester)
+                ).fetchall()
+            else:
+                used = db.execute(
+                    "SELECT day, time, staff_name, subject, year, semester, id FROM timetable WHERE staff_name=?",
+                    (staff_name,)
+                ).fetchall()
             used_slots = {(row["day"], row["time"]): row for row in used}
         # Build a grid: rows=time_slots, columns=days
         timetable_grid = []
@@ -519,7 +527,7 @@ def check_slots():
                     row.append({"subject": "Free", "entry_id": None})
             timetable_grid.append({"time": t, "slots": row})
         slots = timetable_grid
-    return render_template("check_slots.html", slots=slots, staff_name=staff_name, department=department, days=days, message=message)
+    return render_template("check_slots.html", slots=slots, staff_name=staff_name, department=department, days=days, message=message, mode=mode)
 
 # Delete slot route (for check_slots page)
 @app.route("/delete_slot/<int:entry_id>", methods=["POST"])

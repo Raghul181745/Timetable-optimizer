@@ -107,20 +107,29 @@
         <h2>Check & Optimize Slots</h2>
 
         <div class="form-card">
-            <form method="POST" class="form-row">
-                <div class="form-group">
+            <form method="POST" class="form-row" id="checkForm">
+                <div class="form-group" style="flex-basis: 100%; flex-direction: row; justify-content: center; gap: 20px; margin-bottom: 15px;">
+                    <label style="cursor: pointer;">
+                        <input type="radio" name="mode" value="staff" {% if mode != 'dept' %}checked{% endif %} onchange="toggleMode()"> Staff Wise
+                    </label>
+                    <label style="cursor: pointer;">
+                        <input type="radio" name="mode" value="dept" {% if mode == 'dept' %}checked{% endif %} onchange="toggleMode()"> Department Wise
+                    </label>
+                </div>
+
+                <div class="form-group" id="staff_input">
                     <label>Staff Name</label>
-                    <input type="text" name="staff_name" value="{{ staff_name or '' }}" required placeholder="Enter Name">
+                    <input type="text" name="staff_name" value="{{ staff_name or '' }}" placeholder="Enter Name">
                 </div>
                 <div class="form-group">
                     <label>Department</label>
-                    <input type="text" name="department" value="{{ department or '' }}" required placeholder="Enter Dept">
+                    <input type="text" name="department" value="{{ department or '' }}" placeholder="Enter Dept">
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="year_input">
                     <label>Year</label>
                     <input type="text" name="year" value="{{ request.form.get('year', '') }}" placeholder="Year" style="width: 80px;">
                 </div>
-                <div class="form-group">
+                <div class="form-group" id="sem_input">
                     <label>Sem</label>
                     <input type="text" name="semester" value="{{ request.form.get('semester', '') }}" placeholder="Sem" style="width: 80px;">
                 </div>
@@ -130,7 +139,17 @@
 
         <div class="form-card">
             <form method="POST" class="form-row">
+                <input type="hidden" name="mode" value="{{ mode }}">
+                
+                {% if mode == 'dept' and not staff_name %}
+                <div class="form-group">
+                    <label>Staff Name</label>
+                    <input type="text" name="staff_name" required placeholder="Assign to Staff">
+                </div>
+                {% else %}
                 <input type="hidden" name="staff_name" value="{{ staff_name or '' }}">
+                {% endif %}
+
                 <input type="hidden" name="department" value="{{ department or '' }}">
                 <input type="hidden" name="year" value="{{ request.form.get('year', '') }}">
                 <input type="hidden" name="semester" value="{{ request.form.get('semester', '') }}">
@@ -187,5 +206,28 @@
         <a href="{{ url_for('dashboard') }}" class="back-link">← Back to Dashboard</a>
     </div>
     </div>
+
+    <script>
+        function toggleMode() {
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const staffInput = document.querySelector('#staff_input input');
+            const deptInput = document.querySelector('input[name="department"]');
+            const yearInput = document.querySelector('#year_input input');
+            const semInput = document.querySelector('#sem_input input');
+
+            if (mode === 'staff') {
+                staffInput.required = true;
+                deptInput.required = false;
+                yearInput.required = false;
+                semInput.required = false;
+            } else {
+                staffInput.required = false;
+                deptInput.required = true;
+                yearInput.required = true;
+                semInput.required = true;
+            }
+        }
+        window.onload = toggleMode;
+    </script>
 </body>
 </html>
