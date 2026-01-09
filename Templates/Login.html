@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Timetable System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
     body {
         background: #cfdef3 url("{{ url_for('static', filename='background.jpg') }}") no-repeat center center fixed;
@@ -16,30 +17,33 @@
         margin: 0;
     }
     .container {
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(30, 30, 40, 0.9);
         padding: 40px;
         border-radius: 12px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         width: 100%;
         max-width: 400px;
         text-align: center;
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
     h2 {
-        color: #333;
+        color: #ffffff;
         margin-bottom: 20px;
     }
     label {
         display: block;
         text-align: left;
         margin-bottom: 5px;
-        color: #666;
+        color: #b0bec5;
         font-weight: 600;
     }
     input[type="text"], input[type="password"] {
         width: 100%;
         padding: 12px;
         margin-bottom: 20px;
-        border: 1px solid #ddd;
+        border: 1px solid #444;
+        background: #1a1a2e;
+        color: #fff;
         border-radius: 6px;
         box-sizing: border-box;
         font-size: 14px;
@@ -74,7 +78,6 @@
     }
 </style>
 
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
