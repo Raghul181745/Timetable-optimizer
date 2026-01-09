@@ -17,33 +17,30 @@
         margin: 0;
     }
     .container {
-        background: rgba(30, 30, 40, 0.9);
+        background: rgba(255, 255, 255, 0.95);
         padding: 40px;
         border-radius: 12px;
         box-shadow: 0 10px 25px rgba(0,0,0,0.2);
         width: 100%;
         max-width: 400px;
         text-align: center;
-        border: 1px solid rgba(255, 255, 255, 0.1);
     }
     h2 {
-        color: #ffffff;
+        color: #333;
         margin-bottom: 20px;
     }
     label {
         display: block;
         text-align: left;
         margin-bottom: 5px;
-        color: #b0bec5;
+        color: #666;
         font-weight: 600;
     }
     input[type="text"], input[type="password"] {
         width: 100%;
         padding: 12px;
         margin-bottom: 20px;
-        border: 1px solid #444;
-        background: #1a1a2e;
-        color: #fff;
+        border: 1px solid #ddd;
         border-radius: 6px;
         box-sizing: border-box;
         font-size: 14px;
@@ -63,6 +60,14 @@
     button:hover {
         transform: translateY(-2px);
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    form {
+        padding: 0;
+        margin: 0;
+        background: transparent;
+        box-shadow: none;
+        border: none;
+        max-width: 100%;
     }
     .flash-messages {
         list-style: none;

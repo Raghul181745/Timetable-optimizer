@@ -132,7 +132,7 @@ def delete_entry(entry_id):
     db.execute("DELETE FROM timetable WHERE id=?", (entry_id,))
     db.commit()
     flash("🗑️ Entry deleted successfully!")
-    return redirect(url_for("dashboard"))
+    return redirect(request.referrer or url_for("dashboard"))
 
 # Auto-assign slot route (from check_slots page)
 @app.route("/auto_assign", methods=["POST"])
@@ -169,7 +169,7 @@ def auto_assign():
 # Home route
 @app.route("/")
 def home():
-    return redirect(url_for("login"))
+    return redirect(url_for("dashboard"))
 
 # Dashboard route
 @app.route("/dashboard")
@@ -545,7 +545,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
         # Simple password check (You can change "admin" to whatever you want)
-        if password == "Amet@123":
+        if password == "admin":
             session["username"] = username
             flash("Logged in successfully!")
             return redirect(url_for("dashboard"))
