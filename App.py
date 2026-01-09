@@ -169,7 +169,7 @@ def auto_assign():
 # Home route
 @app.route("/")
 def home():
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("login"))
 
 # Dashboard route
 @app.route("/dashboard")
@@ -466,8 +466,6 @@ def check_slots():
     slots = None
     staff_name = None
     department = None
-    year = None
-    semester = None
     message = None
     mode = "staff"
     if request.method == "POST":
@@ -479,64 +477,40 @@ def check_slots():
         auto_assign = request.form.get("auto_assign")
         subject = request.form.get("subject")
         db = get_db()
-        
-        # Helper to fetch used slots based on mode
-        def get_used_slots():
+        used = db.execute(
+            "SELECT day, time, staff_name, subject, year, semester, id FROM timetable WHERE staff_name=? AND department=?",
+            (staff_name, department)
+        ).fetchall()
+        used_slots = {(row["day"], row["time"]): row for row in used}
+        # Auto-assign logic
+        if auto_assign and subject:
+            assigned = False
+            for t in time_slots:
+                for d in days:
+                    if (d, t) not in used_slots:
+                        db.execute(
+                            "INSERT INTO timetable (staff_name, department, year, semester, subject, day, time) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (staff_name, department, year, semester, subject, d, t)
+                        )
+                        db.commit()
+                        message = f"Auto-assigned {subject} to {d} {t}."
+                        assigned = True
+                        break
+                if assigned:
+                    break
+            if not assigned:
+                message = "No free slot available for auto-assign."
+            # Refresh used_slots after auto-assign
             if mode == 'dept':
-                return db.execute(
+                used = db.execute(
                     "SELECT day, time, staff_name, subject, year, semester, id FROM timetable WHERE department=? AND year=? AND semester=?",
                     (department, year, semester)
                 ).fetchall()
             else:
-                return db.execute(
+                used = db.execute(
                     "SELECT day, time, staff_name, subject, year, semester, id FROM timetable WHERE staff_name=?",
                     (staff_name,)
                 ).fetchall()
-
-        used = get_used_slots()
-        used_slots = {(row["day"], row["time"]): row for row in used}
-        
-        # Auto-assign logic
-        if auto_assign:
-            assigned = False
-            final_subject = subject if subject else "Auto Assigned"
-            for t in time_slots:
-                for d in days:
-                    if (d, t) not in used_slots:
-                        # Slot is free for the target (Staff or Class)
-                        target_staff = staff_name
-                        
-                        # If Department mode, find an available staff if none provided
-                        if mode == 'dept':
-                            if not target_staff:
-                                # Find any staff member free at this time
-                                all_staff = db.execute("SELECT DISTINCT staff_name FROM timetable").fetchall()
-                                for s in all_staff:
-                                    is_busy = db.execute("SELECT 1 FROM timetable WHERE staff_name=? AND day=? AND time=?", (s['staff_name'], d, t)).fetchone()
-                                    if not is_busy:
-                                        target_staff = s['staff_name']
-                                        break
-                            else:
-                                # Check if the specific staff is free
-                                is_busy = db.execute("SELECT 1 FROM timetable WHERE staff_name=? AND day=? AND time=?", (target_staff, d, t)).fetchone()
-                                if is_busy:
-                                    target_staff = None
-
-                        if target_staff:
-                            db.execute(
-                                "INSERT INTO timetable (staff_name, department, year, semester, subject, day, time) VALUES (?, ?, ?, ?, ?, ?, ?)",
-                                (target_staff, department, year, semester, final_subject, d, t)
-                            )
-                            db.commit()
-                            message = f"Auto-assigned {final_subject} to {target_staff} at {d} {t}."
-                            assigned = True
-                            break
-                if assigned:
-                    break
-            if not assigned:
-                message = "No free slot available or no staff available."
-            # Refresh used_slots after auto-assign
-            used = get_used_slots()
             used_slots = {(row["day"], row["time"]): row for row in used}
         # Build a grid: rows=time_slots, columns=days
         timetable_grid = []
@@ -546,18 +520,14 @@ def check_slots():
                 key = (d, t)
                 if key in used_slots:
                     entry = used_slots[key]
-                    if mode == 'dept':
-                        # Show Staff Name
-                        display_text = f"{entry['subject']} ({entry['staff_name']})"
-                    else:
-                        # Show Class Details
-                        display_text = f"{entry['subject']} (Y:{entry['year']} S:{entry['semester']})"
+                    # Display format: Subject (Y: 1 S: 2)
+                    display_text = f"{entry['subject']} (Y:{entry['year']} S:{entry['semester']})"
                     row.append({"subject": display_text, "entry_id": entry['id']})
                 else:
                     row.append({"subject": "Free", "entry_id": None})
             timetable_grid.append({"time": t, "slots": row})
         slots = timetable_grid
-    return render_template("check_slots.html", slots=slots, staff_name=staff_name, department=department, year=year, semester=semester, days=days, message=message, mode=mode)
+    return render_template("check_slots.html", slots=slots, staff_name=staff_name, department=department, days=days, message=message, mode=mode)
 
 # Delete slot route (for check_slots page)
 @app.route("/delete_slot/<int:entry_id>", methods=["POST"])
@@ -575,7 +545,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
         # Simple password check (You can change "admin" to whatever you want)
-        if password == "admin":
+        if password == "Amet@123":
             session["username"] = username
             flash("Logged in successfully!")
             return redirect(url_for("dashboard"))
