@@ -51,14 +51,14 @@ Follow these steps to set up the project locally.
     venv\Scripts\activate
 
     # macOS/Linux
+    # Important for Ubuntu: sudo apt install python3-venv
     python3 -m venv venv
     source venv/bin/activate
     ```
 
 3.  **Install Dependencies**
     ```bash
-    pip install flask pandas openpyxl
-    # Note: Install other dependencies listed in your requirements.txt
+    pip install -r requirements.txt
     ```
 
 4.  **Run the Application**
