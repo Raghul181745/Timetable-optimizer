@@ -67,7 +67,7 @@ Follow these steps to set up the project locally.
     ```
 
 5.  **Access the System**
-    Open your web browser and navigate to: `http://127.0.0.1:5000`
+    Open your web browser and navigate to: `http://127.0.0.1:5001`
 
 ---
 *Developed for efficient academic scheduling and resource management.*
