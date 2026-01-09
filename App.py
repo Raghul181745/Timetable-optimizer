@@ -5,7 +5,7 @@ import csv
 import io
 
 app = Flask(__name__)
-app.secret_key = "secret123"
+app.secret_key = "new_secret_key_force_logout"
 
 # Database setup
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -68,6 +68,8 @@ days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
 # Add entry route for manual timetable entry
 @app.route("/add", methods=["GET", "POST"])
 def add_entry():
+    if "username" not in session:
+        return redirect(url_for("login"))
     if request.method == "POST":
         staff_name = request.form["staff_name"]
         department = request.form["department"]
@@ -169,11 +171,13 @@ def auto_assign():
 # Home route
 @app.route("/")
 def home():
-    return redirect(url_for("dashboard"))
+    return redirect(url_for("login"))
 
 # Dashboard route
 @app.route("/dashboard")
 def dashboard():
+    if "username" not in session:
+        return redirect(url_for("login"))
     db = get_db()
 
     # Filter parameters
@@ -463,6 +467,8 @@ def export_pdf():
 # Check slots route
 @app.route("/check_slots", methods=["GET", "POST"])
 def check_slots():
+    if "username" not in session:
+        return redirect(url_for("login"))
     slots = None
     staff_name = None
     department = None
@@ -477,10 +483,16 @@ def check_slots():
         auto_assign = request.form.get("auto_assign")
         subject = request.form.get("subject")
         db = get_db()
-        used = db.execute(
-            "SELECT day, time, staff_name, subject, year, semester, id FROM timetable WHERE staff_name=? AND department=?",
-            (staff_name, department)
-        ).fetchall()
+        if mode == 'dept':
+            used = db.execute(
+                "SELECT day, time, staff_name, subject, year, semester, id FROM timetable WHERE department=? AND year=? AND semester=?",
+                (department, year, semester)
+            ).fetchall()
+        else:
+            used = db.execute(
+                "SELECT day, time, staff_name, subject, year, semester, id FROM timetable WHERE staff_name=?",
+                (staff_name,)
+            ).fetchall()
         used_slots = {(row["day"], row["time"]): row for row in used}
         # Auto-assign logic
         if auto_assign and subject:
@@ -545,7 +557,7 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
         # Simple password check (You can change "admin" to whatever you want)
-        if password == "admin":
+        if password == "amet@123":
             session["username"] = username
             flash("Logged in successfully!")
             return redirect(url_for("dashboard"))
@@ -562,7 +574,7 @@ def logout():
 # Main
 if __name__ == "__main__":
     init_db()
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 5001))
     # Default to debug=True for local, but allow turning it off via env var
     debug_mode = os.environ.get("FLASK_DEBUG", "True").lower() == "true"
     app.run(debug=debug_mode, host='0.0.0.0', port=port)
