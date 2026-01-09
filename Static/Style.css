@@ -9,17 +9,16 @@ body {
 }
 
 .dashboard-page {
-    /* Overlay with a white tint to make text readable over the image */
-    background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('background.jpg') no-repeat center center fixed;
-    background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('dashboard.png') no-repeat center center fixed;
-    background-size: cover;
+    background: transparent;
 }
 
 .container {
     width: 90%;
     max-width: 1200px;
     margin: 40px auto;
-    background: rgba(255, 255, 255, 0.9); /* Semi-transparent white */
+    /* Image inside container with overlay. Adjust 0.85 to change transparency (lower = image clearer) */
+    background: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)), url('dashboard.png') no-repeat center center;
+    background-size: cover;
     backdrop-filter: blur(10px); /* Glass blur effect */
     padding: 40px;
     border-radius: 16px;
